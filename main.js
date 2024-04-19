@@ -1,137 +1,73 @@
-const COLORS = [{ r: 19, g: 23, b: 47 }];
+class GradientAnimation {
+  constructor() {
+    this.cnv = document.querySelector(`canvas`);
+    this.ctx = this.cnv.getContext(`2d`);
 
-class GradientBackground {
-  constructor(containerSelector) {
-    this.$canvas = document.createElement("canvas");
+    this.circlesNum = 30;
+    this.minRadius = 50;
+    this.maxRadius = 100;
+    this.speed = 0.005;
 
-    document.querySelector(containerSelector).appendChild(this.$canvas);
-
-    this.ctx = this.$canvas.getContext("2d");
-    this.pixelRatio = window.devicePixelRatio > 1 ? 2 : 1;
-    this.totalParticles = 15;
-    this.particles = [];
-    this.maxRadius = 500;
-    this.minRadius = 240;
-
-    window.addEventListener("resize", this.resize, false);
-
-    this.resize();
-
-    window.requestAnimationFrame(this.animate.bind(this));
+    (window.onresize = () => {
+      this.setCanvasSize();
+      this.createCircles();
+    })();
+    this.drawAnimation();
   }
+  setCanvasSize() {
+    this.w = this.cnv.width = innerWidth * devicePixelRatio;
+    this.h = this.cnv.height = innerHeight * devicePixelRatio;
 
-  resize = () => {
-    this.stageWidth = document.body.clientWidth;
-    this.stageHeight = document.body.clientHeight + 10;
-
-    this.$canvas.width = this.stageWidth * this.pixelRatio;
-    this.$canvas.height = this.stageHeight * this.pixelRatio;
-
-    this.ctx.scale(this.pixelRatio, this.pixelRatio);
-
-    this.ctx.globalCompositeOperation = "saturation";
-
-    this.createParticles();
-  };
-
-  createParticles = () => {
-    let currentColor = 0;
-
-    this.particles = [];
-
-    for (let i = 0; i < this.totalParticles; i++) {
-      const item = new GlowParticle(
-        Math.random() * this.stageWidth,
-        Math.random() * this.stageHeight,
-        Math.random() * (this.maxRadius - this.minRadius) + this.minRadius,
-        { r: 19, g: 23, b: 47 }
+    this.ctx.scale(devicePixelRatio, devicePixelRatio);
+  }
+  createCircles() {
+    this.circles = [];
+    for (let i = 0; i < this.circlesNum; ++i) {
+      this.circles.push(
+        new Circle(this.w, this.h, this.minRadius, this.maxRadius)
       );
-
-      if (++currentColor >= COLORS.length) {
-        currentColor = 0;
-      }
-
-      this.particles[i] = item;
     }
-  };
-
-  animate() {
-    window.requestAnimationFrame(this.animate.bind(this));
-
-    this.ctx.clearRect(0, 0, this.stageWidth, this.stageHeight);
-
-    for (let i = 0; i < this.totalParticles; i++) {
-      const item = this.particles[i];
-
-      item.animate(this.ctx, this.stageWidth, this.stageHeight);
-    }
+  }
+  drawCircles() {
+    this.circles.forEach((circle) => circle.draw(this.ctx, this.speed));
+  }
+  clearCanvas() {
+    this.ctx.clearRect(0, 0, this.w, this.h);
+  }
+  drawAnimation() {
+    this.clearCanvas();
+    this.drawCircles();
+    window.requestAnimationFrame(() => this.drawAnimation());
   }
 }
 
-class GlowParticle {
-  constructor(x, y, radius, color) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.color = color;
-
-    this.vx = Math.random() * 4;
-    this.vy = Math.random() * 4;
-
-    this.sinValue = Math.random();
+class Circle {
+  constructor(w, h, minR, maxR) {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.angle = Math.random() * Math.PI * 2;
+    this.radius = Math.random() * (maxR - minR) + minR;
+    // this.firstColor = `hsla(${Math.random() * 360}, 100%, 50%, 1)`;
+    // this.secondColor = `hsla(${Math.random() * 360}, 100%, 50%, 0)`;
   }
+  draw(ctx, speed) {
+    this.angle += speed;
+    const x = this.x + Math.cos(this.angle) * 200;
+    const y = this.y + Math.sin(this.angle) * 200;
+    // const gradient = ctx.createRadialGradient(x, y, 0, x, y, this.radius);
 
-  animate = (ctx, stageWidth, stageHeight) => {
-    this.sinValue += 0.01;
-    this.radius += Math.sin(this.sinValue);
-    this.x += this.vx;
-    this.y += this.vy;
+    // gradient.addColorStop(0, this.firstColor);
+    // gradient.addColorStop(1, this.secondColor);
 
-    this.vx *= 0.2;
-    this.vy *= 0.2;
-
-    if (this.x < 0) {
-      this.vx *= -1;
-      this.x += 10;
-    } else if (this.x > stageWidth) {
-      this.vx *= -1;
-      this.x -= 10;
-    }
-
-    if (this.y < 0) {
-      this.vy *= -1;
-      this.y += 10;
-    } else if (this.y > stageHeight) {
-      this.vy *= -1;
-      this.y -= 10;
-    }
-
+    ctx.globalCompositeOperation = `overlay`;
+    // ctx.fillStyle = gradient;
+    ctx.fillStyle = "red";
     ctx.beginPath();
-    const g = ctx.createRadialGradient(
-      this.x,
-      this.y,
-      this.radius * 0.01,
-      this.x,
-      this.y,
-      this.radius
-    );
-
-    g.addColorStop(
-      0,
-      `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 1)`
-    );
-    g.addColorStop(
-      1,
-      `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`
-    );
-
-    ctx.fillStyle = g;
-    // ctx.fillStyle = this.color;
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    ctx.arc(x, y, this.radius, 0, Math.PI * 2);
     ctx.fill();
-  };
+  }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  new GradientBackground("body");
-});
+window.onload = () => {
+  new GradientAnimation();
+};
