@@ -3,9 +3,9 @@ class GradientAnimation {
     this.cnv = document.querySelector(`canvas`);
     this.ctx = this.cnv.getContext(`2d`);
 
-    this.circlesNum = 30;
-    this.minRadius = 50;
-    this.maxRadius = 100;
+    this.circlesNum = 15;
+    this.minRadius = 100;
+    this.maxRadius = 600;
     this.speed = 0.005;
 
     (window.onresize = () => {
@@ -47,21 +47,30 @@ class Circle {
     this.y = Math.random() * h;
     this.angle = Math.random() * Math.PI * 2;
     this.radius = Math.random() * (maxR - minR) + minR;
-    // this.firstColor = `hsla(${Math.random() * 360}, 100%, 50%, 1)`;
-    // this.secondColor = `hsla(${Math.random() * 360}, 100%, 50%, 0)`;
   }
   draw(ctx, speed) {
     this.angle += speed;
+
     const x = this.x + Math.cos(this.angle) * 200;
     const y = this.y + Math.sin(this.angle) * 200;
-    // const gradient = ctx.createRadialGradient(x, y, 0, x, y, this.radius);
 
-    // gradient.addColorStop(0, this.firstColor);
-    // gradient.addColorStop(1, this.secondColor);
+    const g = ctx.createRadialGradient(
+      x,
+      y,
+      this.radius * 0.2,
+      x,
+      y,
+      this.radius
+    );
 
-    ctx.globalCompositeOperation = `overlay`;
+    g.addColorStop(0, `rgba(29,23,47, 1)`);
+    g.addColorStop(1, `rgba(29,23,47, 0)`);
+
+    ctx.fillStyle = g;
+
+    // ctx.globalCompositeOperation = `overlay`;
     // ctx.fillStyle = gradient;
-    ctx.fillStyle = "red";
+    // ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.arc(x, y, this.radius, 0, Math.PI * 2);
     ctx.fill();
